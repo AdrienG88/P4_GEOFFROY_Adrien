@@ -28,17 +28,6 @@ class Round:
         self.matches = matches
 
 
-'''
-class Match:
-    def __init__(self, joueur1, resultat1, joueur2, resultat2):
-        self.joueur1 = joueur1
-        self.resultat1 = resultat1
-        self.joueur2 = joueur2
-        self.resultat2 = resultat2
-
-    def create_match(self, players):
-'''
-
 # DECLARATION DES VARIABLES GLOBALES
 db = TinyDB('db2.json')
 rondes = list()
@@ -53,19 +42,17 @@ players_table = db.table('players')
 serialized_players = players_table.all()
 
 
-def create_player_instances():
+def create_player_instances(joueurs):
     for i in range(0, len(serialized_players)):
-        instance_name = 'player_' + str(i+1)
-        vars()[instance_name] = Player(serialized_players[i]['nom'],
-                                       serialized_players[i]['elo'],
-                                       serialized_players[i]['score']
-                                       )
-        global joueurs
-        joueurs.append(vars()[instance_name])
-        print(instance_name, vars()[instance_name].nom, vars()[instance_name].elo, vars()[instance_name].score)
+        player = Player(serialized_players[i]['nom'],
+                        serialized_players[i]['elo'],
+                        serialized_players[i]['score']
+                       )
+        joueurs.append(player)
+        print(player.nom, player.elo, player.score)
 
 
-create_player_instances()
+create_player_instances(joueurs)
 
 
 # INSTANCIATION DE CLASSE PLAYER DES JOUEURS
@@ -94,20 +81,8 @@ joueurs = serialize_players()
 print('JOUEURS: ', joueurs)
 '''
 
-
-
-# FONCTIONS POUR LE CLASSEMENT DES JOUEURS POUR L'APPARIEMENT PAR MATCHES
-def my_function_a(e):
-    return e.elo
-
-
-def my_function_b(e):
-    return e.score
-
 # FONCTION DE CREATION DES ITEMS DES MATCHES
-def create_round_list():
-    global joueurs
-    global r_joueurs
+def add_scores_for_round_list(joueurs):
     r_joueurs = list()
     for i in range(0, len(joueurs)):
         r_joueur = Player(nom=joueurs[i].nom, elo=joueurs[i].elo, score=round_scores[i])
@@ -117,12 +92,14 @@ def create_round_list():
 ########################################################################################################################
 # RONDE 1
 
-joueurs.sort(reverse=True, key=my_function_a)
-joueurs.sort(reverse=True, key=my_function_b)
+joueurs.sort(reverse=True, key=lambda x: (x.score, x.elo))
 print('CLASSEMENT INITIAL: ')
 for i in range(0, len(joueurs)):
     print(joueurs[i].nom, joueurs[i].elo, joueurs[i].score)
 
+
+#fonction lambda pour classer les joueurs en fonction des matches à venir:
+#joueurs[i], joueurs[j] avec i<=len(joueurs)/2 et j = i + len(joueurs)/2
 
 # MATCHES DU ROUND1
 print('\nMATCHES DU ROUND1: ')
@@ -253,8 +230,7 @@ for i in range(0, len(round_scores)):
     joueurs[i].score += float(round_scores[i])
 
 # ON CLASSE LES JOUEURS APRES AVOIR ENTRE LES RESULTATS DU ROUND
-joueurs.sort(reverse=True, key=my_function_a)
-joueurs.sort(reverse=True, key=my_function_b)
+joueurs.sort(reverse=True, key=lambda x: (x.score, x.elo))
 print('\nCLASSEMENT EN FIN DE ROUND: ')
 for i in range(0, len(joueurs)):
     print(joueurs[i].nom, joueurs[i].elo, joueurs[i].score)
@@ -311,8 +287,7 @@ for i in range(0, len(round_scores)):
     joueurs[i].score += float(round_scores[i])
 
 # ON CLASSE LES JOUEURS APRES AVOIR ENTRE LES RESULTATS DU ROUND
-joueurs.sort(reverse=True, key=my_function_a)
-joueurs.sort(reverse=True, key=my_function_b)
+joueurs.sort(reverse=True, key=lambda x: (x.score, x.elo))
 print('\nCLASSEMENT EN FIN DE ROUND: ')
 for i in range(0, len(joueurs)):
     print(joueurs[i].nom, joueurs[i].elo, joueurs[i].score)
@@ -369,8 +344,7 @@ for i in range(0, len(round_scores)):
     joueurs[i].score += float(round_scores[i])
 
 # ON CLASSE LES JOUEURS APRES AVOIR ENTRE LES RESULTATS DU ROUND
-joueurs.sort(reverse=True, key=my_function_a)
-joueurs.sort(reverse=True, key=my_function_b)
+joueurs.sort(reverse=True, key=lambda x: (x.score, x.elo))
 print('\nCLASSEMENT EN FIN DE TOURNOI: ')
 for i in range(0, len(joueurs)):
     print(joueurs[i].nom, joueurs[i].elo, joueurs[i].score)
