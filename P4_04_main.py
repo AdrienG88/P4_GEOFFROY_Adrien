@@ -15,3 +15,4 @@ serialized_players = players_table.all()
 
 c = Controller()
 Controller.main_loop(c)
+
