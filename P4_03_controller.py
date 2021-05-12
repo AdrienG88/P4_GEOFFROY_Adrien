@@ -1,5 +1,5 @@
 # IMPORTATIONS
-from P4_01_model import Player, Tournament, Round, Match, Test, Serializer
+from P4_01_model import Player, Tournament, Round, Match, Test, Deserializer, Serializer
 from P4_02_view import *
 from tinydb import TinyDB, Query
 
@@ -12,11 +12,12 @@ class Controller:
     def __init__(self):
         self.db = TinyDB('db.json')
         self.view = View()
-        self.tournament = Tournament(str(), int(), list(), list())
+        self.tournament = Tournament(str(), list(), int(), list())
         self.player = Player(str(), int())
         self.round = Round(str(), list())
         self.match = Match(Player(str(), int()), Player(str(), int()), float(), float())
         self.test = Test()
+        self.deserializer = Deserializer()
         self.serializer = Serializer()
 
 # METHODES DU CONTROLEUR
@@ -27,9 +28,9 @@ class Controller:
         tour_rounds_nr = self.view.input_tour_rounds_nr()
         tournament = self.tournament.create_tournament(tour_name, tour_rounds_nr)
         # Serialisation
-        serialized_tournament = self.tournament.serialize_tournament(tournament)
+        serialized_tournament = self.serializer.serialize_tournament(tournament)
         # Stockage dans db
-        Tournament.save_tournament(serialized_tournament, db)
+        self.tournament.save_tournament(serialized_tournament, db)
         # désérialise le tournoi créé/stocké sur la db pour test
         created_tournament = self.tournament.get_created_tournament(db)
         # TEST input vs db
@@ -48,6 +49,70 @@ class Controller:
         # TEST input vs db
         created_player = self.player.get_created_player(db)
         self.test.test_created_player(player, created_player)
+
+    def prepare_round(self):
+        tour_name = self.view.input_tour_name()
+        tournament = self.tournament.get_tournament(tour_name, db)
+        active_tournament = self.deserializer.deserialize_tournament(tournament)
+        return active_tournament
+
+    def create_first_round(self, player_ratings, active_tournament):
+        self.tournament.sort_players(player_ratings)
+        self.view.display_player_ratings(player_ratings)
+
+        self.round.pair_round1_matches(player_ratings)
+        self.view.display_round_matches(player_ratings)
+
+        matches = list()
+        for i in range(0, len(player_ratings), 2):
+            self.view.input_round_matches(i, player_ratings)
+            score_w = self.view.input_player_score_white()
+            score_b = self.view.input_player_score_black()
+            player_ratings[i][1] += float(score_w)
+            player_ratings[i+1][1] += float(score_b)
+            match = Match(player_ratings[i][0], player_ratings[i+1][0], score_w, score_b)
+            matches.append(match)
+
+        for match in matches:
+            print(match.player_white[0].name, match.player_white[0].elo, match.player_white[1],
+                  match.player_black[0].name, match.player_black[0].elo, match.player_black[1])
+
+        round = Round(name='Ronde 1', matches=matches)
+        active_tournament.rounds.append(round)
+        serialized_tournament = self.serializer.serialize_tournament(active_tournament)
+        print(serialized_tournament)
+        self.tournament.delete_tournament(serialized_tournament, db)
+        self.tournament.save_tournament(serialized_tournament, db)
+
+    def create_other_round(self, player_ratings, active_tournament):
+        self.tournament.sort_players(player_ratings)
+        self.view.display_player_ratings(player_ratings)
+
+        self.round.pair_round_matches(player_ratings)
+        self.view.display_round_matches(player_ratings)
+
+        matches = list()
+        for i in range(0, len(player_ratings), 2):
+            self.view.input_round_matches(i, player_ratings)
+            score_w = self.view.input_player_score_white()
+            score_b = self.view.input_player_score_black()
+            player_ratings[i][1] += float(score_w)
+            player_ratings[i+1][1] += float(score_b)
+            match = Match(player_ratings[i][0], player_ratings[i+1][0], score_w, score_b)
+            matches.append(match)
+
+        for match in matches:
+            print(match.player_white[0].name, match.player_white[0].elo, match.player_white[1],
+                  match.player_black[0].name, match.player_black[0].elo, match.player_black[1])
+
+        round_name = "Ronde "+str(len(active_tournament.rounds)+1)
+        round = Round(name=round_name, matches=matches)
+        active_tournament.rounds.append(round)
+        serialized_tournament = self.serializer.serialize_tournament(active_tournament)
+        print(serialized_tournament)
+        self.tournament.delete_tournament(serialized_tournament, db)
+        self.tournament.save_tournament(serialized_tournament, db)
+
 
     # BOUCLES DU MENU
 
@@ -119,62 +184,24 @@ class Controller:
                 # Recuperation du tournoi selectionné dans la db
                 tournament = self.tournament.get_tournament(tour_name, db)
                 # Deserialisation du tournoi en instance de classe Tournament
-                active_tournament = self.tournament.deserialize_tournament(tournament)
+                active_tournament = self.deserializer.deserialize_tournament(tournament)
                 # On retourne le tournoi actif pour le manipuler par la suite
                 return active_tournament
 
             if user_selection == '2':
-                # AJOUTER UNE RONDE
-                # verifier que le tournoi actif est le bon
-                # Fonction de saisie du nom
-                tour_name = self.view.input_tour_name()
-                # Recuperation du tournoi selectionné dans la db
-                tournament = self.tournament.get_tournament(tour_name, db)
-                # Deserialisation du tournoi en instance de classe Tournament
-                active_tournament = self.tournament.deserialize_tournament(tournament)
-                # Deserialisation du classement
-                active_tournament.player_ratings =\
-                    self.tournament.deserialize_player_ratings(active_tournament)
-                # comparer le nombre de rondes enregistrees avec le nombre total de rondes
+                active_tournament = self.prepare_round()
 
-                # Lancer le script de rondes
-                player_ratings = active_tournament.player_ratings
-                # Premiere ronde
-                #methode
                 if len(active_tournament.rounds) == 0:
-                    # classer les joueurs en fonction de leur ELO et résultat
-                    self.tournament.sort_players(player_ratings)
-                    # afficher le classement du tournoi
-                    self.view.display_player_ratings(player_ratings)
-                    # afficher les matches de la ronde
-                    # créer une liste jumelle du classement des joueurs pour créer les matches de la ronde
-                    tmp_round_players = list()
-                    for player in player_ratings:
-                        tmp_round_players.append(player)
-                    # ordonner la liste en fonction des matches de la ronde
-                    self.round.create_round1_matches(tmp_round_players)
-                    self.view.display_round_matches(tmp_round_players)
-                    # entrer les résultats de la ronde 1
-                    matches = list()
-                    for i in range(0, len(tmp_round_players), 2):
-                        self.view.input_round_matches(i, tmp_round_players)
-                        score_w = self.view.input_player_score_white()
-                        score_b = self.view.input_player_score_black()
-                        match = Match(tmp_round_players[i][0], tmp_round_players[i+1][0], score_w, score_b)
-                        matches.append(match)
+                    self.create_first_round(active_tournament.player_ratings, active_tournament)
+                    break
 
-                    for match in matches:
-                        print(match.player_white[0].name, match.player_white[0].elo, match.player_white[1],
-                              match.player_black[0].name, match.player_black[0].elo, match.player_black[1])
+                elif len(active_tournament.rounds) <= int(active_tournament.rounds_nr):
+                    self.create_other_round(active_tournament.player_ratings, active_tournament)
+                    break
 
-                    # create_round
-                    first_round = Round('round1', matches)
-                    # serialize_matches
-                    self.serializer.serialize_round(first_round)
-
-                # elif len(active_tournament.rounds) < active_tournament.rounds_nr
-#                else:
-#                    break
+                else:
+                    print('Le tournoi est terminé!')
+                    break
 
             if user_selection == '3':
                 # Ajouter les joueurs au tournoi
@@ -187,7 +214,7 @@ class Controller:
                 # Recuperer le tournoi selectionné dans la db
                 tournament = self.tournament.get_tournament(name, db)
                 # Deserialiser le tournoi en instance de classe Tournament
-                active_tournament = self.tournament.deserialize_tournament(tournament)
+                active_tournament = self.deserializer.deserialize_tournament(tournament)
                 # Transformer les joueurs {"Nom": name, "ELO": elo} en tuples ({"Nom": name, "ELO": elo}, score=0)
                 rated_players = list()
                 for player in players_list:
@@ -196,11 +223,11 @@ class Controller:
                 # Modifier l'attribut players du tournoi
                 active_tournament.players = rated_players
                 # Serialiser le tournoi pour exportation dans db
-                active_tournament = self.tournament.serialize_tournament(active_tournament)
+                serialized_tournament = self.serializer.serialize_tournament(active_tournament)
                 # Effacer l'ancienne version du tournoi dans la db
-                self.tournament.erase_tournament(active_tournament, db)
+                self.tournament.delete_tournament(serialized_tournament, db)
                 # Enregistrer les modifications dans la db
-                Tournament.save_tournament(active_tournament, db)
+                self.tournament.save_tournament(serialized_tournament, db)
 
             if user_selection == '4':
                 break

@@ -20,12 +20,6 @@ class Player:
         serialized_player = {'Nom': player.name, 'ELO': player.elo}
         return serialized_player
 
-    def deserialize_player(self, player):
-        name = player['Nom']
-        elo = player['ELO']
-        deserialized_player = Player(name, elo)
-        return deserialized_player
-
 #    def get_players_from_db(self):
 #        player_list = list()
 #        for player in self.db.table('players'):
@@ -62,7 +56,8 @@ class Tournament:
         self.db = TinyDB('db.json')
         self.player = Player(str(), int())
 
-    def create_tournament(self, name, rounds_nr):
+    @staticmethod
+    def create_tournament(name, rounds_nr):
         player_ratings = list()
         rounds = list()
         tournament = Tournament(name, player_ratings, rounds_nr, rounds)
@@ -73,30 +68,8 @@ class Tournament:
 #        for player in player_list:
 #            serialized_player = self.player.serialize_player(player)
 
-    def serialize_tournament(self, tournament):
-        serialized_tournament = {'Nom': tournament.name,
-                                 'Classement': tournament.player_ratings,
-                                 'Nombre de rondes': tournament.rounds_nr,
-                                 'Rondes': tournament.rounds
-                                 }
-        return serialized_tournament
-
-    def deserialize_tournament(self, tournament):
-        name = tournament[0]['Nom']
-        player_ratings = tournament[0]['Classement']
-        rounds_nr = tournament[0]['Nombre de rondes']
-        rounds = tournament[0]['Rondes']
-        deserialized_tournament = Tournament(name, player_ratings, rounds_nr, rounds)
-        return deserialized_tournament
-
-    def deserialize_player_ratings(self, active_tournament):
-        player_ratings = list()
-        for rated_player in active_tournament.player_ratings:
-            rated_player = (self.player.deserialize_player(rated_player[0]), rated_player[1])
-            player_ratings.append(rated_player)
-        return player_ratings
-
-    def sort_players(self, players):
+    @staticmethod
+    def sort_players(players):
         players.sort(reverse=True, key=lambda x: (x[1], x[0].elo))
         return players
 
@@ -104,19 +77,26 @@ class Tournament:
     def save_tournament(serialized_tournament, db):
         tournaments_table = db.table('tournaments')
         tournaments_table.insert(serialized_tournament)
+        print('\nModifications du tournoi enregistrées\n')
 
-    def erase_tournament(self, active_tournament, db):
+    @staticmethod
+    def delete_tournament(active_tournament, db):
         q = Query()
         name = active_tournament['Nom']
         db.table('tournaments').remove(q.Nom == name)
-        print('Tournoi effacé')
 
-    def get_tournament(self, name, db):
+    @staticmethod
+    def update_tournament(active_tournament, db):
+        pass
+
+    @staticmethod
+    def get_tournament(name, db):
         q = Query()
         tournoi = db.table('tournaments').search(q.Nom == name)
         return tournoi
 
-    def get_created_tournament(self, db):
+    @staticmethod
+    def get_created_tournament(db):
         name = db.table('tournaments').all()[-1]['Nom']
         rounds_nr = db.table('tournaments').all()[-1]['Nombre de rondes']
         q = Query()
@@ -134,15 +114,28 @@ class Round:
         self.name = name
         self.matches = matches
 
-    def create_round1_matches(self, player_ratings):
-        r1_players = list()
+    @staticmethod
+    def pair_round1_matches(player_ratings):
+        round1_players = list()
         for i in range(0, int(len(player_ratings) / 2)):
             j = i + len(player_ratings) / 2
-            r1_players.append(player_ratings[i])
-            r1_players.append(player_ratings[int(j)])
+            round1_players.append(player_ratings[i])
+            round1_players.append(player_ratings[int(j)])
 
         player_ratings.clear()
-        for player in r1_players:
+        for player in round1_players:
+            player_ratings.append(player)
+        return player_ratings
+
+    @staticmethod
+    def pair_round_matches(player_ratings):
+        round_players = list()
+        for i in range(0, len(player_ratings), 2):
+            round_players.append(player_ratings[i])
+            round_players.append(player_ratings[i+1])
+
+        player_ratings.clear()
+        for player in round_players:
             player_ratings.append(player)
         return player_ratings
 
@@ -192,14 +185,73 @@ class Test:
             print('Effacement du dernier joueur cree effectue')
 
 
+class Deserializer:
+
+    def deserialize_tournament(self, tournament):
+        name = tournament[0]['Nom']
+        player_ratings = self.deserialize_player_ratings(tournament[0]['Classement'])
+        rounds_nr = int(tournament[0]['Nombre de rondes'])
+        rounds = self.deserialize_rounds(tournament[0]['Rondes'])
+        deserialized_tournament = Tournament(name, player_ratings, rounds_nr, rounds)
+        return deserialized_tournament
+
+    def deserialize_player_ratings(self, player_ratings):
+        deserialized_player_ratings = list()
+        for rated_player in player_ratings:
+            deserialized_rated_player = [self.deserialize_player(rated_player[0]), float(rated_player[1])]
+            deserialized_player_ratings.append(deserialized_rated_player)
+        return deserialized_player_ratings
+
+    def deserialize_rounds(self, rounds):
+        deserialized_rounds = list()
+        for round in rounds:
+            name = round['Nom']
+            matches = self.deserialize_matches(round['Matches'])
+            deserialized_round = Round(name, matches)
+            deserialized_rounds.append(deserialized_round)
+        return deserialized_rounds
+
+    def deserialize_matches(self, matches):
+        deserialized_matches = list()
+        for match in matches:
+            player_white = self.deserialize_player(match[0][0])
+            player_black = self.deserialize_player(match[1][0])
+            score_white = float(match[0][1])
+            score_black = float(match[1][1])
+            deserialized_match = Match(player_white, player_black, score_white, score_black)
+            deserialized_matches.append(deserialized_match)
+        return deserialized_matches
+
+    @staticmethod
+    def deserialize_player(player):
+        name = player['Nom']
+        elo = player['ELO']
+        deserialized_player = Player(name, elo)
+        return deserialized_player
+
+
 class Serializer:
 
     def serialize_tournament(self, tournament):
-        pass
+        serialized_tournament = {'Nom': tournament.name,
+                                 'Classement': self.serialize_player_ratings(tournament.player_ratings),
+                                 'Nombre de rondes': tournament.rounds_nr,
+                                 'Rondes': self.serialize_rounds(tournament.rounds)}
+        return serialized_tournament
 
-    def serialize_round(self, round):
-        serialized_round = [{'name': round.name, 'matches': self.serialize_matches(round.matches)}]
-        return serialized_round
+    def serialize_player_ratings(self, player_ratings):
+        serialized_player_ratings = list()
+        for rated_player in player_ratings:
+            serialized_rated_player = [self.serialize_player(rated_player[0]), rated_player[1]]
+            serialized_player_ratings.append(serialized_rated_player)
+        return serialized_player_ratings
+
+    def serialize_rounds(self, rounds):
+        serialized_rounds = list()
+        for round in rounds:
+            serialized_round = {'Nom': round.name, 'Matches': self.serialize_matches(round.matches)}
+            serialized_rounds.append(serialized_round)
+        return serialized_rounds
 
     def serialize_matches(self, matches):
         serialized_matches = list()
@@ -210,7 +262,8 @@ class Serializer:
             serialized_matches.append(serialized_match)
         return serialized_matches
 
-    def serialize_player(self, player):
+    @staticmethod
+    def serialize_player(player):
         serialized_player = {'Nom': player.name, 'ELO': player.elo}
         return serialized_player
 
