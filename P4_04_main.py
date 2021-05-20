@@ -1,4 +1,4 @@
-from tinydb import TinyDB, Query
+from tinydb import TinyDB
 from P4_03_controller import Controller
 
 # DECLARATION DES VARIABLES GLOBALES
@@ -15,4 +15,3 @@ serialized_players = players_table.all()
 
 c = Controller()
 Controller.main_loop(c)
-
