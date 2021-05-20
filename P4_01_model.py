@@ -10,8 +10,8 @@ class Player:
         self.db = TinyDB('db.json')
 
     @staticmethod
-    def create_rated_player(player, score):
-        rated_player = (player, score)
+    def create_rated_player(id_nr, score):
+        rated_player = (id_nr, score)
         return rated_player
 
     @staticmethod
@@ -21,6 +21,16 @@ class Player:
         created_player = Player(name, elo)
         print(created_player.name, created_player.elo)
         return created_player
+
+    @staticmethod
+    def get_players_from_id(id_ratings, players_table):
+        player_ratings = list()
+        for rated_id in id_ratings:
+            player = players_table.get(doc_id=rated_id[0])
+            score = id_ratings[1]
+            rated_player = [player, score]
+            player_ratings.append(rated_player)
+        return player_ratings
 
     def save_player(self, serialized_player):
         players_table = self.db.table('players')
@@ -33,11 +43,12 @@ class Player:
 
 
 class Tournament:
-    def __init__(self, name, player_ratings, rounds_nr, rounds):
+    def __init__(self, name, player_ratings, rounds_nr, rounds, matches):
         self.name = name
         self.player_ratings = player_ratings
         self.rounds_nr = rounds_nr
         self.rounds = rounds
+        self.matches = matches
         self.db = TinyDB('db.json')
         self.player = Player(str(), int())
 
@@ -45,7 +56,8 @@ class Tournament:
     def create_tournament(name, rounds_nr):
         player_ratings = list()
         rounds = list()
-        tournament = Tournament(name, player_ratings, rounds_nr, rounds)
+        matches = list()
+        tournament = Tournament(name, player_ratings, rounds_nr, rounds, matches)
         return tournament
 
     @staticmethod
@@ -54,9 +66,10 @@ class Tournament:
         rounds_nr = db.table('tournaments').all()[-1]['Nombre de rondes']
         rounds = db.table('tournaments').all()[-1]['Rondes']
         player_ratings = db.table('tournaments').all()[-1]['Classement']
-        created_tournament = Tournament(name, player_ratings, rounds_nr, rounds)
+        matches = db.table('tournaments').all[-1]['Matches']
+        created_tournament = Tournament(name, player_ratings, rounds_nr, rounds, matches)
         print(created_tournament.name, created_tournament.player_ratings, created_tournament.rounds_nr,
-              created_tournament.rounds)
+              created_tournament.rounds, created_tournament.matches)
         return created_tournament
 
     @staticmethod
@@ -156,13 +169,15 @@ class Deserializer:
         player_ratings = self.deserialize_player_ratings(tournament[0]['Classement'])
         rounds_nr = int(tournament[0]['Nombre de rondes'])
         rounds = self.deserialize_rounds(tournament[0]['Rondes'])
-        deserialized_tournament = Tournament(name, player_ratings, rounds_nr, rounds)
+        matches = self.deserialize_matches(tournament[0]['Matches'])
+        deserialized_tournament = Tournament(name, player_ratings, rounds_nr, rounds, matches)
         return deserialized_tournament
 
-    def deserialize_player_ratings(self, player_ratings):
+    @staticmethod
+    def deserialize_player_ratings(player_ratings):
         deserialized_player_ratings = list()
         for rated_player in player_ratings:
-            deserialized_rated_player = [self.deserialize_player(rated_player[0]), float(rated_player[1])]
+            deserialized_rated_player = (rated_player[0], float(rated_player[1]))
             deserialized_player_ratings.append(deserialized_rated_player)
         return deserialized_player_ratings
 
@@ -175,11 +190,12 @@ class Deserializer:
             deserialized_rounds.append(deserialized_round)
         return deserialized_rounds
 
-    def deserialize_matches(self, matches):
+    @staticmethod
+    def deserialize_matches(matches):
         deserialized_matches = list()
         for match in matches:
-            player_white = self.deserialize_player(match[0][0])
-            player_black = self.deserialize_player(match[1][0])
+            player_white = match[0][0]
+            player_black = match[1][0]
             score_white = float(match[0][1])
             score_black = float(match[1][1])
             deserialized_match = Match(player_white, player_black, score_white, score_black)

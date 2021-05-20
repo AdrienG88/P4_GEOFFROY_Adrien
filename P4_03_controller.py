@@ -56,7 +56,7 @@ class Controller:
         active_tournament = self.deserializer.deserialize_tournament(tournament)
         return active_tournament
 
-    def create_players_list_for_tournament(self):
+    def create_players_id_list(self):
         print(db.table('players').all())
         players_list = list()
         while len(players_list) < 8:
@@ -65,21 +65,22 @@ class Controller:
             user_choice = self.view.input_user_choice_addition()
             if user_choice == 'Y':
                 joueur = Query()
-                searched_player = players_table.search(joueur.Nom == player_name)
-                players_list.append(searched_player[0])
+                searched_player = players_table.get(joueur.Nom == player_name)
+                players_list.append(searched_player.doc_id)
             if user_choice == 'N':
                 pass
             self.view.display_players_list_length(players_list)
-            print('Joueurs importés: ', players_list)
+            self.view.display_players_list(players_list)
+        return players_list
 
-        deserialized_players_list = list()
-        for player in players_list:
-            deserialized_player = self.deserializer.deserialize_player(player)
-            deserialized_players_list.append(deserialized_player)
-        return deserialized_players_list
+#        deserialized_players_list = list()
+#        for player in players_list:
+#            deserialized_player = self.deserializer.deserialize_player(player)
+#            deserialized_players_list.append(deserialized_player)
+#        return deserialized_players_list
 
     def import_players_to_tournament(self):
-        deserialized_players_list = self.create_players_list_for_tournament()
+        deserialized_players_list = self.create_players_id_list()
 
         tour_name = self.view.input_tour_name()
         tournament = self.tournament.get_saved_tournament(tour_name, db)
@@ -171,9 +172,11 @@ class Controller:
                 active_tournament = self.prepare_round()
 
                 if len(active_tournament.rounds) == 0:
+                    # change player_id into player
                     self.create_first_round(active_tournament.player_ratings, active_tournament)
 
                 elif len(active_tournament.rounds) <= int(active_tournament.rounds_nr):
+                    # change player_id into player
                     self.create_other_round(active_tournament.player_ratings, active_tournament)
 
                 else:

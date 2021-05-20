@@ -140,8 +140,15 @@ class View:
         print(result)
 
     @staticmethod
+    def display_players_list(players_list):
+        print('\nJoueurs importés: ')
+        for player in players_list:
+            displayed_player = players_table.get(doc_id=player)
+            print(displayed_player)
+
+    @staticmethod
     def display_players_list_length(players_list):
-        print('Nombre de joueurs importés: ', len(players_list))
+        print('\nNombre de joueurs importés: ', len(players_list))
 
 # FONCTIONS DE SAISIE DE DONNEES
     @staticmethod
