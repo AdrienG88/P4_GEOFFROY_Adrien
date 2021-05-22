@@ -100,20 +100,26 @@ class View:
 
     @staticmethod
     def display_player_ratings(player_ratings):
-        print('CLASSEMENT DES PARTICIPANTS:\n Nom  ELO  score')
+        print('\nCLASSEMENT DES PARTICIPANTS:\n Nom  ELO  Score')
         for i in range(0, len(player_ratings)):
-            print(player_ratings[i][0].name, player_ratings[i][0].elo, player_ratings[i][1])
+            print(players_table.get(doc_id=player_ratings[i][0])['Nom'],
+                  players_table.get(doc_id=player_ratings[i][0])['ELO'],
+                  player_ratings[i][1])
 
     @staticmethod
     def display_round_matches(player_ratings):
         print('\nMATCHES DE LA RONDE: ')
         for i in range(0, len(player_ratings), 2):
-            print(player_ratings[i][0].name, "contre", player_ratings[i + 1][0].name)
+            print(players_table.get(doc_id=player_ratings[i][0])['Nom'], "(BLANCS)",
+                  "contre",
+                  players_table.get(doc_id=player_ratings[i+1][0])['Nom'], "(NOIRS)")
 
     @staticmethod
-    def input_round_matches(i, player_ratings):
-            print('MATCH', int(i/2+1))
-            print(player_ratings[i][0].name, "contre", player_ratings[i + 1][0].name)
+    def input_round_results(i, player_ratings):
+        print('MATCH', int(i/2+1))
+        print(players_table.get(doc_id=player_ratings[i][0])['Nom'], "(BLANCS)",
+              "contre",
+              players_table.get(doc_id=player_ratings[i+1][0])['Nom'], "(NOIRS)")
 
     # METHODES D'AFFICHAGE DES DONNEES DE LA BASE DE DONNEES
 
@@ -135,20 +141,17 @@ class View:
 
     @staticmethod
     def search_tournament_by_name(tournaments_table, name):
-        tour = Query()
-        result = tournaments_table.search(tour.Nom == name)
+        result = tournaments_table.search(Query().Nom == name)
         print(result)
 
     @staticmethod
-    def display_players_list(players_list):
-        print('\nJoueurs importés: ')
-        for player in players_list:
-            displayed_player = players_table.get(doc_id=player)
-            print(displayed_player)
+    def display_imported_players(players_id_list):
+        for player_id in players_id_list:
+            print(players_table.get(doc_id=player_id))
 
     @staticmethod
     def display_players_list_length(players_list):
-        print('\nNombre de joueurs importés: ', len(players_list))
+        print('Nombre de joueurs importés: ', len(players_list))
 
 # FONCTIONS DE SAISIE DE DONNEES
     @staticmethod
@@ -190,4 +193,9 @@ class View:
     @staticmethod
     def input_user_choice_deletion():
         user_choice = input("Confirmer la suppression? Y/N: ")
+        return user_choice
+
+    @staticmethod
+    def input_user_choice_import():
+        user_choice = input("Continuer l'importation? Y/N: ")
         return user_choice
