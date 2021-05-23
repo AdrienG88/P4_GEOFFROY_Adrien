@@ -118,8 +118,8 @@ class Controller:
         self.round.pair_round1_matches(player_ratings)
         self.view.display_round_matches(player_ratings)
 
-        matchmaking_data = self.create_matchmaking_data(player_ratings)
-        for played_match in matchmaking_data:
+        new_matchmaking_data = self.create_matchmaking_data(player_ratings)
+        for played_match in new_matchmaking_data:
             active_tournament.matchmaking_data.append(played_match)
 
         round = Round(name='Ronde 1', matches=self.create_round_matches(player_ratings))
@@ -132,11 +132,12 @@ class Controller:
     def create_other_round(self, player_ratings, active_tournament):
         self.tournament.sort_players(player_ratings, players_table)
         self.view.display_player_ratings(player_ratings)
-        self.round.pair_other_rounds_matches(player_ratings)
+        tested_matchmaking_data = active_tournament.matchmaking_data
+        self.round.pair_other_rounds_matches(player_ratings, tested_matchmaking_data)
         self.view.display_round_matches(player_ratings)
 
-        matchmaking_data = self.create_matchmaking_data(player_ratings)
-        for played_match in matchmaking_data:
+        new_matchmaking_data = self.create_matchmaking_data(player_ratings)
+        for played_match in new_matchmaking_data:
             active_tournament.matchmaking_data.append(played_match)
 
         round_name = "Ronde "+str(len(active_tournament.rounds)+1)
@@ -188,11 +189,13 @@ class Controller:
                 if len(active_tournament.rounds) == 0:
                     self.create_first_round(active_tournament.player_ratings, active_tournament)
 
-                elif len(active_tournament.rounds) <= int(active_tournament.rounds_nr):
+                elif len(active_tournament.rounds) < int(active_tournament.rounds_nr):
                     self.create_other_round(active_tournament.player_ratings, active_tournament)
 
                 else:
-                    print('Le tournoi est terminé!')
+                    print('\nCe tournoi est terminé!')
+                    self.tournament.sort_players(active_tournament.player_ratings, players_table)
+                    self.view.display_player_ratings(active_tournament.player_ratings)
                     break
 
             if user_selection == '5':
