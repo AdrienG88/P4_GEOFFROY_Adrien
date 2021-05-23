@@ -96,39 +96,56 @@ class Round:
 
     @staticmethod
     def pair_round1_matches(player_ratings):
-        tmp_player_ratings = list()
+        coin_flip_player_ratings = list()
         for i in range(0, int(len(player_ratings) / 2)):
             j = i + len(player_ratings) / 2
             coin_flip = random.randint(0, 1)
             if coin_flip == 0:
-                tmp_player_ratings.append(player_ratings[i])
-                tmp_player_ratings.append(player_ratings[int(j)])
+                coin_flip_player_ratings.append(player_ratings[i])
+                coin_flip_player_ratings.append(player_ratings[int(j)])
             if coin_flip == 1:
-                tmp_player_ratings.append(player_ratings[int(j)])
-                tmp_player_ratings.append(player_ratings[i])
+                coin_flip_player_ratings.append(player_ratings[int(j)])
+                coin_flip_player_ratings.append(player_ratings[i])
 
         player_ratings.clear()
-        for player in tmp_player_ratings:
+        for player in coin_flip_player_ratings:
             player_ratings.append(player)
         return player_ratings
 
-    # utiliser la liste des matches joues pour verifier que l'appariement est bon
-    @staticmethod
-    def pair_other_rounds_matches(player_ratings):
-        tmp_player_ratings = list()
-        for i in range(0, len(player_ratings), 2):
+    def pair_other_rounds_matches(self, player_ratings, matchmaking_data):
+        i = 1
+        tested_player_ratings = list()
+        while len(player_ratings) > 2:
+            self.matchmaking_data_test(i, player_ratings, tested_player_ratings, matchmaking_data)
+        tested_player_ratings.append(player_ratings[0])
+        tested_player_ratings.append(player_ratings[1])
+
+        coin_flip_player_ratings = list()
+        for i in range(0, len(tested_player_ratings), 2):
             coin_flip = random.randint(0, 1)
             if coin_flip == 0:
-                tmp_player_ratings.append(player_ratings[i])
-                tmp_player_ratings.append(player_ratings[i+1])
+                coin_flip_player_ratings.append(tested_player_ratings[i])
+                coin_flip_player_ratings.append(tested_player_ratings[i+1])
             if coin_flip == 1:
-                tmp_player_ratings.append(player_ratings[i+1])
-                tmp_player_ratings.append(player_ratings[i])
+                coin_flip_player_ratings.append(tested_player_ratings[i+1])
+                coin_flip_player_ratings.append(tested_player_ratings[i])
 
         player_ratings.clear()
-        for player in tmp_player_ratings:
+        for player in coin_flip_player_ratings:
             player_ratings.append(player)
         return player_ratings
+
+    def matchmaking_data_test(self, i, player_ratings, tested_player_ratings, matchmaking_data):
+        if (player_ratings[0][0], player_ratings[i][0]) not in matchmaking_data and\
+                (player_ratings[i][0], player_ratings[0][0]) not in matchmaking_data:
+            tested_player_ratings.append(player_ratings[0])
+            tested_player_ratings.append(player_ratings[i])
+            del player_ratings[0]
+            del player_ratings[i-1]
+            return tested_player_ratings
+        else:
+            i += 1
+            self.matchmaking_data_test(i, player_ratings, tested_player_ratings, matchmaking_data)
 
 
 class Match:
