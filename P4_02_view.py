@@ -123,20 +123,61 @@ class View:
 
     # METHODES D'AFFICHAGE DES DONNEES DE LA BASE DE DONNEES
 
+    def display_actor_list(self):
+        actor_list = list()
+        for actor in players_table:
+            actor_list.append(actor)
+        user_choice = self.input_user_choice_sorting()
+        print("Liste de tous les acteurs: ")
+        if user_choice == '1':
+            actor_list.sort(key=lambda x: x['Nom'])
+            for player in actor_list:
+                print(player)
+        elif user_choice == '2':
+            actor_list.sort(reverse=True, key=lambda x: x['ELO'])
+            for player in actor_list:
+                print(player)
+
+    def display_tournament_player_list(self):
+        tournament_name = self.input_tour_name()
+        tournament = tournaments_table.get(Query().Nom == tournament_name)
+        player_list = list()
+        for rated_player in tournament['Classement']:
+            player_list.append(players_table.get(doc_id=rated_player[0]))
+        user_choice = self.input_user_choice_sorting()
+        print("Liste de tous les joueurs du tournoi de", tournament_name, ": ")
+        if user_choice == '1':
+            player_list.sort(key=lambda x: x['Nom'])
+            for player in player_list:
+                print(player)
+        elif user_choice == '2':
+            player_list.sort(reverse=True, key=lambda x: x['ELO'])
+            for player in player_list:
+                print(player)
+
     @staticmethod
     def display_tournament_list():
         for tournament in tournaments_table:
-            print(tournament)
+            print(tournament['Nom'])
 
-    @staticmethod
-    def display_player_list():
-        for player in players_table:
-            print(player)
+    def display_all_tournament_rounds(self):
+        tournament_name = self.input_tour_name()
+        tournament = tournaments_table.get(Query().Nom == tournament_name)
+        print("Rondes du tournoi de", tournament_name, ": ")
+        for round in tournament['Rondes']:
+            print(round)
+
+    def display_all_round_matches(self):
+        tournament_name = self.input_tour_name()
+        tournament = tournaments_table.get(Query().Nom == tournament_name)
+        print("Matches du tournoi de", tournament_name, "ayant eu lieu: ")
+        for match in tournament['Matches joues']:
+            print(players_table.get(doc_id=match[0])['Nom'], "(BLANCS) contre",
+                  players_table.get(doc_id=match[1])['Nom'], "(NOIRS)")
 
     @staticmethod
     def search_player_by_name(players_table, name):
-        joueur = Query()
-        result = players_table.search(joueur.Nom == name)
+        result = players_table.search(Query().Nom == name)
         print(result)
 
     @staticmethod
@@ -198,4 +239,9 @@ class View:
     @staticmethod
     def input_user_choice_import():
         user_choice = input("Continuer l'importation? Y/N: ")
+        return user_choice
+
+    @staticmethod
+    def input_user_choice_sorting():
+        user_choice = input("Classer par\n    Ordre alphabétique (entrez '1')\n    Classement ELO (entrez '2')\n")
         return user_choice

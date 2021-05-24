@@ -148,7 +148,7 @@ class Controller:
 
         self.tournament.save_tournament(serialized_tournament, db)
 
-# BOUCLES DU MENU
+    # BOUCLES DU MENU
     def main_loop(self):
         loop_length = 4
         while True:
@@ -243,27 +243,21 @@ class Controller:
             user_selection = self.view.display_reports_menu()
 
             if user_selection == '1':
-                # Liste de tous les acteurs
-                pass
+                self.view.display_actor_list()
 
             if user_selection == '2':
-                # Liste de tous les joueurs d\'un tournoi
-                self.view.display_player_list()
+                self.view.display_tournament_player_list()
 
             if user_selection == '3':
-                # Liste de tous les tournois
                 self.view.display_tournament_list()
 
             if user_selection == '4':
-                # Liste de toutes les rondes d\'un tournoi
-                pass
+                self.view.display_all_tournament_rounds()
 
             if user_selection == '5':
-                # Liste de tous les matchs d\'un tournoi
-                pass
+                self.view.display_all_round_matches()
 
             if user_selection == '6':
-                # Menu principal
                 break
 
             else:
