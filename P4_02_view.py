@@ -2,7 +2,22 @@ from tinydb import TinyDB, Query
 db = TinyDB('db.json')
 players_table = db.table('players')
 tournaments_table = db.table('tournaments')
+accepted_letters_list = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+                             'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '-']
 
+# class InputError(Exception):
+#    def __init__(self, expression, message):
+#        self.expression = expression
+#        self.message = message
+
+#    def check_is_score(input):
+#        accepted_scores_list = [0.0, 0.5, 1.0]
+#        if float(input) not in accepted_scores_list:
+#            raise InputScoreError(Exception)
+
+#    def check_addition(white_score, black_score):
+#        if float(white_score) + float(black_score) != 1.0
+#           raise InputScoreValueError(Exception)
 
 class View:
     def __init__(self):
@@ -195,53 +210,164 @@ class View:
         print('Nombre de joueurs importés: ', len(players_list))
 
 # FONCTIONS DE SAISIE DE DONNEES
-    @staticmethod
-    def input_tour_name():
-        t_name = input('Veuillez entrer le nom du tournoi: ')
-        return t_name
+    def input_tour_name(self):
+        try:
+            p_name = input('Entrez le nom du tournoi: ')
+            i = 0
+            while i < len(p_name):
+                if p_name[i].lower() not in accepted_letters_list:
+                    raise ValueError
+                else:
+                    i += 1
+            return p_name
+        except ValueError:
+            print("N'accepte que des lettres (caractères non spéciaux) et le tiret '-'")
+            return self.input_tour_name()
 
-    @staticmethod
-    def input_tour_rounds_nr():
-        t_rounds_nr_raw = input('Veuillez entrer le nombre de rondes du tournoi: ')
-        t_rounds_nr = int(t_rounds_nr_raw)
-        return t_rounds_nr
+    def input_tour_rounds_nr(self):
+        try:
+            t_rounds_nr = input('Veuillez entrer le nombre de rondes du tournoi (par défaut: "4"): ')
+            if len(t_rounds_nr) == 0:
+                t_rounds_nr = 4
+                return t_rounds_nr
+            elif int(t_rounds_nr):
+                try:
+                    if int(t_rounds_nr) < 1:
+                        raise ValueError
+                    else:
+                        return int(t_rounds_nr)
+                except ValueError:
+                    print("Le nombre de rondes doit être un entier supérieur à zéro!")
+                    return self.input_tour_rounds_nr()
+            else:
+                raise ValueError
+        except ValueError:
+            print("Vous devez entrer un nombre! (entier supérieur à zéro)")
+            return self.input_tour_rounds_nr()
 
-    @staticmethod
-    def input_player_name():
-        p_name = input('Entrez le nom du joueur: ')
-        return p_name
+    def input_player_name(self):
+        try:
+            p_name = input('Entrez le nom du joueur: ')
+            i = 0
+            while i < len(p_name):
+                if p_name[i].lower() not in accepted_letters_list:
+                    raise ValueError
+                else:
+                    i += 1
+            return p_name
+        except ValueError:
+            print("N'accepte que des lettres (caractères non spéciaux) et le tiret '-'")
+            return self.input_player_name()
 
-    @staticmethod
-    def input_player_elo():
-        elo = input('Entrez le classement ELO du joueur: ')
-        return elo
+    def input_player_first_name(self):
+        try:
+            p_name = input('Entrez le prénom du joueur: ')
+            i = 0
+            while i < len(p_name):
+                if p_name[i].lower() not in accepted_letters_list:
+                    raise ValueError
+                else:
+                    i += 1
+            return p_name
+        except ValueError:
+            print("N'accepte que des lettres (caractères non spéciaux) et le tiret '-'")
+            return self.input_player_first_name()
 
-    @staticmethod
-    def input_player_score_white():
-        score_w = input("Entrez le score du joueur BLANCS ('0', '0.5' ou '1'): ")
-        return score_w
+    def input_player_elo(self):
+        try:
+            elo = input('Entrez le classement ELO du joueur: ')
+            if int(elo):
+                try:
+                    if int(elo) < 1000 or int(elo) > 2900:
+                        raise ValueError
+                    else:
+                        return int(elo)
+                except ValueError:
+                    print("Le classement ELO doit être un entier compris entre 1000 et 2900!")
+                    return self.input_player_elo()
+            else:
+                raise ValueError
+        except ValueError:
+            print("Vous devez entrer un nombre! (entier supérieur compris entre 1000 et 2900)")
+            return self.input_player_elo()
 
-    @staticmethod
-    def input_player_score_black():
-        score_b = input("Entrez le score du joueur NOIRS ('0', '0.5' ou '1'): ")
-        return score_b
+    def input_player_scores_checked(self):
+        score_white = self.input_player_score_white()
+        score_black = self.input_player_score_black()
+        try:
+            if score_white + score_black == 1:
+                return score_white, score_black
+            else:
+                raise ValueError
+        except ValueError:
+            print("La somme des scores des deux joueurs doit être égale à 1!")
+            return self.input_player_scores_checked()
 
-    @staticmethod
-    def input_user_choice_addition():
-        user_choice = input("Confirmer l'ajout? Y/N: ")
-        return user_choice
+    def input_player_score_white(self):
+        accepted_scores = ['0', '0.5', '1']
+        try:
+            score_w = input("Entrez le score du joueur BLANCS ('0', '0.5' ou '1'): ")
+            if score_w in accepted_scores:
+                return float(score_w)
+            else:
+                raise ValueError
+        except ValueError:
+            print("Le résultat du joueur doit être 0, 0.5 ou 1!")
+            return self.input_player_score_white()
 
-    @staticmethod
-    def input_user_choice_deletion():
-        user_choice = input("Confirmer la suppression? Y/N: ")
-        return user_choice
+    def input_player_score_black(self):
+        accepted_scores = ['0', '0.5', '1']
+        try:
+            score_b = input("Entrez le score du joueur NOIRS ('0', '0.5' ou '1'): ")
+            if score_b in accepted_scores:
+                return float(score_b)
+            else:
+                raise ValueError
+        except ValueError:
+            print("Le résultat du joueur doit être 0, 0.5 ou 1!")
+            return self.input_player_score_black()
 
-    @staticmethod
-    def input_user_choice_import():
-        user_choice = input("Continuer l'importation? Y/N: ")
-        return user_choice
+    def input_user_choice_addition(self):
+        try:
+            user_choice = input("Confirmer l'ajout? Y/N: ")
+            if user_choice.lower() == 'y' or user_choice.lower() == 'n':
+                return user_choice
+            else:
+                raise ValueError
+        except ValueError:
+            print("Veuillez choisir Y/N")
+            return self.input_user_choice_addition()
 
-    @staticmethod
-    def input_user_choice_sorting():
-        user_choice = input("Classer par\n    Ordre alphabétique (entrez '1')\n    Classement ELO (entrez '2')\n")
-        return user_choice
+    def input_user_choice_deletion(self):
+        try:
+            user_choice = input("Confirmer la suppression? Y/N: ")
+            if user_choice.lower() == 'y' or user_choice.lower() == 'n':
+                return user_choice
+            else:
+                raise ValueError
+        except ValueError:
+            print("Veuillez choisir Y/N")
+            return self.input_user_choice_deletion()
+
+    def input_user_choice_import(self):
+        try:
+            user_choice = input("Continuer l'importation? Y/N: ")
+            if user_choice.lower() == 'y' or user_choice.lower() == 'n':
+                return user_choice
+            else:
+                raise ValueError
+        except ValueError:
+            print("Veuillez choisir Y/N")
+            return self.input_user_choice_import()
+
+    def input_user_choice_sorting(self):
+        try:
+            user_choice = input("Classer par\n    Ordre alphabétique (entrez '1')\n    Classement ELO (entrez '2')\n")
+            if user_choice == '1' or user_choice == '2':
+                return user_choice
+            else:
+                raise ValueError
+        except ValueError:
+            print("Veuillez choisir 1 ou 2")
+            return self.input_user_choice_sorting()
+

@@ -61,11 +61,12 @@ class Controller:
                 player_id = players_table.get(Query().Nom == player_name).doc_id
                 players_id_list.append(player_id)
             if user_choice == 'N':
-                self.view.input_user_choice_import()
-                if user_choice == 'Y':
-                    pass
-                if user_choice == 'N':
-                    break
+                pass
+#                self.view.input_user_choice_import()
+#                if user_choice == 'Y':
+#                    pass
+#                if user_choice == 'N':
+#                    break
             self.view.display_players_list_length(players_id_list)
             self.view.display_imported_players(players_id_list)
         return players_id_list
@@ -102,13 +103,12 @@ class Controller:
         matches = list()
         for i in range(0, len(player_ratings), 2):
             self.view.input_round_results(i, player_ratings)
-            score_white = self.view.input_player_score_white()
-            score_black = self.view.input_player_score_black()
+            player_scores = self.view.input_player_scores_checked()
             player_white = self.deserializer.deserialize_player(players_table.get(doc_id=player_ratings[i][0]))
             player_black = self.deserializer.deserialize_player(players_table.get(doc_id=player_ratings[i+1][0]))
-            player_ratings[i][1] += float(score_white)
-            player_ratings[i+1][1] += float(score_black)
-            match = Match(player_white, player_black, score_white, score_black)
+            player_ratings[i][1] += float(player_scores[0])
+            player_ratings[i+1][1] += float(player_scores[1])
+            match = Match(player_white, player_black, player_scores[0], player_scores[1])
             matches.append(match)
         return matches
 
