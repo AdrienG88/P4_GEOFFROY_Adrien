@@ -75,7 +75,6 @@ class Tournament:
 
     @staticmethod
     def sort_players(player_ratings, players_table):
-        # TO BE CHANGED
         tmp_player_ratings = list()
         for player in player_ratings:
             tmp_rated_player = players_table.get(doc_id=player[0]), player[1]
