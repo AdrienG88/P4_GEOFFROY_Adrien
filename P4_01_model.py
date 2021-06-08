@@ -4,17 +4,24 @@ import random
 
 
 class Player:
-    def __init__(self, name, elo):
+    def __init__(self, name, first_name, birthdate, sex, elo):
         self.name = name
+        self.first_name = first_name
+        self.birthdate = birthdate
+        self.sex = sex
         self.elo = elo
         self.db = TinyDB('db.json')
 
     @staticmethod
     def get_created_player(db):
         name = db.table('players').all()[-1]['Nom']
+        first_name = db.table('players').all()[-1]['Prenom']
+        birthdate = db.table('players').all()[-1]['Date de naissance']
+        sex = db.table('players').all()[-1]['Sexe']
         elo = db.table('players').all()[-1]['ELO']
-        created_player = Player(name, elo)
-        print(created_player.name, created_player.elo)
+        created_player = Player(name, first_name, birthdate, sex, elo)
+        print(created_player.name, created_player.first_name, created_player.birthdate,
+              created_player.sex, created_player.elo)
         return created_player
 
     def save_player(self, serialized_player):
@@ -23,38 +30,47 @@ class Player:
         return serialized_player
 
 
-#    def to_json(self):
-#        return json.loads(json.dumps(self, default=lambda o: o.__dict__))
-
-
 class Tournament:
-    def __init__(self, name, player_ratings, rounds_nr, rounds, matchmaking_data):
+    def __init__(self, name, place, date, player_ratings, rounds_nr, rounds, time_ctrl, desc, matchmaking_data):
         self.name = name
+        self.place = place
+        self.date = date
         self.player_ratings = player_ratings
         self.rounds_nr = rounds_nr
         self.rounds = rounds
+        self.time_ctrl = time_ctrl
+        self.desc = desc
         self.matchmaking_data = matchmaking_data
         self.db = TinyDB('db.json')
-        self.player = Player(str(), int())
+        self.player = Player(str(), str(), str(), str(), int())
 
     @staticmethod
-    def create_tournament(name, rounds_nr):
+    def create_tournament_instance(name, place, date, rounds_nr, time_ctrl, desc):
         player_ratings = list()
         rounds = list()
         matchmaking_data = list()
-        tournament = Tournament(name, player_ratings, rounds_nr, rounds, matchmaking_data)
+        tournament =\
+            Tournament(name, place, date, player_ratings, rounds_nr, rounds, time_ctrl, desc, matchmaking_data)
         return tournament
 
     @staticmethod
     def get_created_tournament(db):
         name = db.table('tournaments').all()[-1]['Nom']
+        place = db.table('tournaments').all()[-1]['Lieu']
+        date = db.table('tournaments').all()[-1]['Date']
         player_ratings = db.table('tournaments').all()[-1]['Classement']
         rounds_nr = db.table('tournaments').all()[-1]['Nombre de rondes']
         rounds = db.table('tournaments').all()[-1]['Rondes']
+        time_ctrl = db.table('tournaments').all()[-1]['Cadence']
+        desc = db.table('tournaments').all()[-1]['Description']
         matchmaking_data = db.table('tournaments').all()[-1]['Matches joues']
-        created_tournament = Tournament(name, player_ratings, rounds_nr, rounds, matchmaking_data)
-        print(created_tournament.name, created_tournament.player_ratings, created_tournament.rounds_nr,
-              created_tournament.rounds, created_tournament.matchmaking_data)
+        created_tournament =\
+            Tournament(name, place, date, player_ratings, rounds_nr, rounds, time_ctrl, desc, matchmaking_data)
+
+        print(created_tournament.name, created_tournament.place, created_tournament.date,
+              created_tournament.player_ratings, created_tournament.rounds_nr, created_tournament.rounds,
+              created_tournament.time_ctrl, created_tournament.desc, created_tournament.matchmaking_data)
+
         return created_tournament
 
     @staticmethod
@@ -157,7 +173,7 @@ class Match:
 
 class Test:
     def __init__(self):
-        self.player = Player(str(), int())
+        self.player = Player(str(), str(), str(), str(), int())
         self.db = TinyDB('db.json')
 
     def test_created_player(self, player, created_player):
@@ -186,11 +202,16 @@ class Deserializer:
 
     def deserialize_tournament(self, tournament):
         name = tournament[0]['Nom']
+        place = tournament[0]['Lieu']
+        date = tournament[0]['Date']
         player_ratings = self.deserialize_player_ratings(tournament[0]['Classement'])
         rounds_nr = int(tournament[0]['Nombre de rondes'])
         rounds = self.deserialize_rounds(tournament[0]['Rondes'])
+        time_ctrl = tournament[0]['Cadence']
+        desc = tournament[0]['Description']
         matchmaking_data = self.deserialize_matchmaking_data(tournament[0]['Matches joues'])
-        deserialized_tournament = Tournament(name, player_ratings, rounds_nr, rounds, matchmaking_data)
+        deserialized_tournament =\
+            Tournament(name, place, date, player_ratings, rounds_nr, rounds, time_ctrl, desc, matchmaking_data)
         return deserialized_tournament
 
     @staticmethod
@@ -203,9 +224,9 @@ class Deserializer:
 
     def deserialize_rounds(self, rounds):
         deserialized_rounds = list()
-        for round in rounds:
-            name = round['Nom']
-            matches = self.deserialize_matches(round['Matches'])
+        for current_round in rounds:
+            name = current_round['Nom']
+            matches = self.deserialize_matches(current_round['Matches'])
             deserialized_round = Round(name, matches)
             deserialized_rounds.append(deserialized_round)
         return deserialized_rounds
@@ -221,7 +242,6 @@ class Deserializer:
             deserialized_matches.append(deserialized_match)
         return deserialized_matches
 
-    # MODIFY?
     @staticmethod
     def deserialize_matchmaking_data(matchmaking_data):
         deserialized_matchmaking_data = list()
@@ -233,8 +253,12 @@ class Deserializer:
     @staticmethod
     def deserialize_player(player):
         name = player['Nom']
+        first_name = player['Prenom']
+        birthdate = player['Date de naissance']
+        sex = player['Sexe']
         elo = player['ELO']
-        deserialized_player = Player(name, elo)
+
+        deserialized_player = Player(name, first_name, birthdate, sex, elo)
         return deserialized_player
 
 
@@ -242,9 +266,13 @@ class Serializer:
 
     def serialize_tournament(self, tournament):
         serialized_tournament = {'Nom': tournament.name,
+                                 'Lieu': tournament.place,
+                                 'Date': tournament.date,
                                  'Classement': self.serialize_player_ratings(tournament.player_ratings),
                                  'Nombre de rondes': tournament.rounds_nr,
                                  'Rondes': self.serialize_rounds(tournament.rounds),
+                                 'Cadence': tournament.time_ctrl,
+                                 'Description': tournament.desc,
                                  'Matches joues': self.serialize_matchmaking_data(tournament.matchmaking_data)}
         return serialized_tournament
 
@@ -258,8 +286,8 @@ class Serializer:
 
     def serialize_rounds(self, rounds):
         serialized_rounds = list()
-        for round in rounds:
-            serialized_round = {'Nom': round.name, 'Matches': self.serialize_matches(round.matches)}
+        for current_round in rounds:
+            serialized_round = {'Nom': current_round.name, 'Matches': self.serialize_matches(current_round.matches)}
             serialized_rounds.append(serialized_round)
         return serialized_rounds
 
@@ -273,7 +301,6 @@ class Serializer:
             serialized_matches.append(serialized_match)
         return serialized_matches
 
-    # MODIFY?
     @staticmethod
     def serialize_matchmaking_data(matchmaking_data):
         serialized_matchmaking_data = list()
@@ -284,5 +311,9 @@ class Serializer:
 
     @staticmethod
     def serialize_player(player):
-        serialized_player = {'Nom': player.name, 'ELO': player.elo}
+        serialized_player = {'Nom': player.name,
+                             'Prenom': player.first_name,
+                             'Date de naissance': player.birthdate,
+                             'Sexe': player.sex,
+                             'ELO': player.elo}
         return serialized_player
