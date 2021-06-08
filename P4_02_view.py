@@ -1,23 +1,9 @@
 from tinydb import TinyDB, Query
+import datetime
 db = TinyDB('db.json')
 players_table = db.table('players')
 tournaments_table = db.table('tournaments')
-accepted_letters_list = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-                             'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '-']
 
-# class InputError(Exception):
-#    def __init__(self, expression, message):
-#        self.expression = expression
-#        self.message = message
-
-#    def check_is_score(input):
-#        accepted_scores_list = [0.0, 0.5, 1.0]
-#        if float(input) not in accepted_scores_list:
-#            raise InputScoreError(Exception)
-
-#    def check_addition(white_score, black_score):
-#        if float(white_score) + float(black_score) != 1.0
-#           raise InputScoreValueError(Exception)
 
 class View:
     def __init__(self):
@@ -30,9 +16,8 @@ class View:
         # defines all options available in main menu
         main_menu = dict()
         main_menu['1'] = 'Menu création'
-        main_menu['2'] = 'Menu recherche'
-        main_menu['3'] = 'Menu rapports'
-        main_menu['4'] = 'Quitter le programme'
+        main_menu['2'] = 'Menu rapports'
+        main_menu['3'] = 'Quitter le programme'
 
         options = main_menu.keys()
         print('***********************************************\nMENU PRINCIPAL:')
@@ -72,20 +57,6 @@ class View:
         for entry in options:
             print(entry, player_submenu[entry])
 
-        selection = input('***********************************************\nChoisissez une option: ')
-        return selection
-
-    @staticmethod
-    def display_search_menu():
-        search_menu = dict()
-        search_menu['1'] = 'Rechercher un joueur'
-        search_menu['2'] = 'Rechercher un tournoi'
-        search_menu['3'] = 'Menu principal'
-
-        options = search_menu.keys()
-        print('\n***********************************************\nMENU RECHERCHE:')
-        for entry in options:
-            print(entry, search_menu[entry])
         selection = input('***********************************************\nChoisissez une option: ')
         return selection
 
@@ -154,7 +125,7 @@ class View:
                 print(player)
 
     def display_tournament_player_list(self):
-        tournament_name = self.input_tour_name()
+        tournament_name = self.input_name("nom du tournoi")
         tournament = tournaments_table.get(Query().Nom == tournament_name)
         player_list = list()
         for rated_player in tournament['Classement']:
@@ -176,14 +147,14 @@ class View:
             print(tournament['Nom'])
 
     def display_all_tournament_rounds(self):
-        tournament_name = self.input_tour_name()
+        tournament_name = self.input_name("nom du tournoi")
         tournament = tournaments_table.get(Query().Nom == tournament_name)
         print("Rondes du tournoi de", tournament_name, ": ")
-        for round in tournament['Rondes']:
-            print(round)
+        for current_round in tournament['Rondes']:
+            print(current_round)
 
     def display_all_round_matches(self):
-        tournament_name = self.input_tour_name()
+        tournament_name = self.input_name("nom du tournoi")
         tournament = tournaments_table.get(Query().Nom == tournament_name)
         print("Matches du tournoi de", tournament_name, "ayant eu lieu: ")
         for match in tournament['Matches joues']:
@@ -210,19 +181,21 @@ class View:
         print('Nombre de joueurs importés: ', len(players_list))
 
 # FONCTIONS DE SAISIE DE DONNEES
-    def input_tour_name(self):
+    def input_name(self, attr_name):
+        accepted_letters_list = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+                                 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '-']
         try:
-            p_name = input('Entrez le nom du tournoi: ')
+            tested_input = input("Entrez le " + attr_name + ": ")
             i = 0
-            while i < len(p_name):
-                if p_name[i].lower() not in accepted_letters_list:
+            while i < len(tested_input):
+                if tested_input[i].lower() not in accepted_letters_list:
                     raise ValueError
                 else:
                     i += 1
-            return p_name
+            return tested_input
         except ValueError:
             print("N'accepte que des lettres (caractères non spéciaux) et le tiret '-'")
-            return self.input_tour_name()
+            return self.input_name(attr_name)
 
     def input_tour_rounds_nr(self):
         try:
@@ -230,48 +203,49 @@ class View:
             if len(t_rounds_nr) == 0:
                 t_rounds_nr = 4
                 return t_rounds_nr
-            elif int(t_rounds_nr):
-                try:
-                    if int(t_rounds_nr) < 1:
-                        raise ValueError
-                    else:
-                        return int(t_rounds_nr)
-                except ValueError:
-                    print("Le nombre de rondes doit être un entier supérieur à zéro!")
-                    return self.input_tour_rounds_nr()
             else:
-                raise ValueError
+                if int(t_rounds_nr) < 1:
+                    raise ValueError
+                return int(t_rounds_nr)
         except ValueError:
             print("Vous devez entrer un nombre! (entier supérieur à zéro)")
             return self.input_tour_rounds_nr()
 
-    def input_player_name(self):
+    def input_date(self, date_attr):
         try:
-            p_name = input('Entrez le nom du joueur: ')
-            i = 0
-            while i < len(p_name):
-                if p_name[i].lower() not in accepted_letters_list:
-                    raise ValueError
-                else:
-                    i += 1
-            return p_name
+            date = input("Entrez la " + date_attr + "(JJ/MM/AAAA): ")
+            datetime.datetime.strptime(date, '%d/%m/%Y')
+            return date
         except ValueError:
-            print("N'accepte que des lettres (caractères non spéciaux) et le tiret '-'")
-            return self.input_player_name()
+            print("Erreur de saisie de la date (format JJ/MM/AAAA)")
+            return self.input_date(date_attr)
 
-    def input_player_first_name(self):
+    def input_time_ctrl(self):
+        time_ctrl_list = ["bullet", "blitz", "coup rapide"]
+        time_ctrl = input("Entrez la cadence de jeu du tournoi (bullet, blitz ou coup rapide): ")
         try:
-            p_name = input('Entrez le prénom du joueur: ')
-            i = 0
-            while i < len(p_name):
-                if p_name[i].lower() not in accepted_letters_list:
-                    raise ValueError
-                else:
-                    i += 1
-            return p_name
+            if time_ctrl.lower() in time_ctrl_list:
+                return time_ctrl.lower()
         except ValueError:
-            print("N'accepte que des lettres (caractères non spéciaux) et le tiret '-'")
-            return self.input_player_first_name()
+            print("Veuillez entrer 'bullet', 'blitz' ou 'coup rapide'")
+            return self.input_time_ctrl()
+
+    @staticmethod
+    def input_desc():
+        desc = input("Entrez ici les remarques générales du directeur du tournoi: ")
+        return desc
+
+    def input_player_sex(self):
+        sex_list = ['m', 'f', 'a']
+        try:
+            sex = input("Entrez le sexe du joueur ('M' pour masculin, 'F' pour féminin, 'A' pour autre): ")
+            if sex.lower() in sex_list:
+                return sex.capitalize()
+            else:
+                raise ValueError
+        except ValueError:
+            print("Veuillez entrer 'M' pour masculin, 'F' pour féminin, 'A' pour autre")
+            return self.input_player_sex()
 
     def input_player_elo(self):
         try:
@@ -309,8 +283,7 @@ class View:
             score_w = input("Entrez le score du joueur BLANCS ('0', '0.5' ou '1'): ")
             if score_w in accepted_scores:
                 return float(score_w)
-            else:
-                raise ValueError
+            raise ValueError
         except ValueError:
             print("Le résultat du joueur doit être 0, 0.5 ou 1!")
             return self.input_player_score_white()
@@ -342,9 +315,8 @@ class View:
         try:
             user_choice = input("Confirmer la suppression? Y/N: ")
             if user_choice.lower() == 'y' or user_choice.lower() == 'n':
-                return user_choice
-            else:
-                raise ValueError
+                return user_choice.lower()
+
         except ValueError:
             print("Veuillez choisir Y/N")
             return self.input_user_choice_deletion()
@@ -354,8 +326,7 @@ class View:
             user_choice = input("Continuer l'importation? Y/N: ")
             if user_choice.lower() == 'y' or user_choice.lower() == 'n':
                 return user_choice
-            else:
-                raise ValueError
+
         except ValueError:
             print("Veuillez choisir Y/N")
             return self.input_user_choice_import()
@@ -370,4 +341,3 @@ class View:
         except ValueError:
             print("Veuillez choisir 1 ou 2")
             return self.input_user_choice_sorting()
-
