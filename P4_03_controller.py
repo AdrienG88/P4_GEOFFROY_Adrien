@@ -1,9 +1,8 @@
-# IMPORTATIONS
 from P4_01_model import Player, Tournament, Round, Match, Test, Deserializer, Serializer
 from P4_02_view import *
 from tinydb import TinyDB, Query
 
-# DECLARATION DE VARIABLES PREALABLE
+# Preliminary variable initializations.
 players_table = db.table('players')
 tournaments_table = db.table('tournaments')
 
@@ -22,8 +21,9 @@ class Controller:
         self.deserializer = Deserializer()
         self.serializer = Serializer()
 
-# METHODES DU CONTROLEUR
+    # Controller methods start here.
     def create_tournament(self):
+        """Creates a tournament instance from user inputs, serializes it and saves it in the database."""
         name = self.view.input_name("nom du tournoi")
         place = self.view.input_name("lieu du tournoi")
         dates = self.view.input_date("date du tournoi")
@@ -37,6 +37,7 @@ class Controller:
         self.test.test_created_tournament(tournament, created_tournament)
 
     def create_player(self):
+        """Creates a player instance from user inputs, serializes it and saves it in the database."""
         player_name = self.view.input_name("nom du joueur")
         player_first_name = self.view.input_name("prénom du joueur")
         player_birthdate = self.view.input_date("date de naissance du joueur")
@@ -49,6 +50,7 @@ class Controller:
         self.test.test_created_player(player, created_player)
 
     def delete_player(self):
+        """Deletes a player picked with an input from the "players" table."""
         name = self.view.input_name("nom du joueur")
         player = players_table.search(Query().Nom == name)
         print(player)
@@ -60,6 +62,7 @@ class Controller:
             print('Opération annulée')
 
     def create_players_id_list(self):
+        """Picks a list of player ids in the "players" table as future players for the tournament."""
         print(db.table('players').all())
         players_id_list = list()
         while len(players_id_list) < 8:
@@ -69,18 +72,12 @@ class Controller:
             if user_choice == 'Y':
                 player_id = players_table.get(Query().Nom == player_name).doc_id
                 players_id_list.append(player_id)
-            if user_choice == 'N':
-                pass
-#                self.view.input_user_choice_import()
-#                if user_choice == 'Y':
-#                    pass
-#                if user_choice == 'N':
-#                    break
             self.view.display_players_list_length(players_id_list)
             self.view.display_imported_players(players_id_list)
         return players_id_list
 
     def import_players_to_tournament(self):
+        """Adds players_id_list to input-picked tournament and save tournament in database."""
         players_id_list = self.create_players_id_list()
         tour_name = self.view.input_name("nom du tournoi")
         tournament = self.tournament.get_saved_tournament(tour_name, db)
@@ -95,6 +92,7 @@ class Controller:
         self.tournament.save_tournament(serialized_tournament, db)
 
     def import_tournament(self):
+        """Choose active tournament for further action and turns it into a Tournament-class instance."""
         tour_name = self.view.input_name("nom du tournoi")
         tournament = self.tournament.get_saved_tournament(tour_name, db)
         active_tournament = self.deserializer.deserialize_tournament(tournament)
@@ -102,6 +100,7 @@ class Controller:
 
     @staticmethod
     def create_matchmaking_data(player_ratings):
+        """In a round, creates tuples representing played matches and adds them to a Tournament-class instance."""
         matchmaking_data = list()
         for i in range(0, len(player_ratings), 2):
             played_match = player_ratings[i][0], player_ratings[i + 1][0]
@@ -109,9 +108,10 @@ class Controller:
         return matchmaking_data
 
     def create_round_matches(self, player_ratings):
+        """In a round, create a Match-class instance list to be added to a Tournament-class instance."""
         matches = list()
         for i in range(0, len(player_ratings), 2):
-            self.view.input_round_results(i, player_ratings)
+            self.view.display_current_match(i, player_ratings)
             player_scores = self.view.input_player_scores_checked()
             player_white = self.deserializer.deserialize_player(players_table.get(doc_id=player_ratings[i][0]))
             player_black = self.deserializer.deserialize_player(players_table.get(doc_id=player_ratings[i+1][0]))
@@ -122,6 +122,7 @@ class Controller:
         return matches
 
     def create_first_round(self, player_ratings, active_tournament):
+        """Creates and adds a Round-class instance to a Tournament-class instance (if there are no rounds yet)."""
         self.tournament.sort_players(player_ratings, players_table)
         self.view.display_player_ratings(player_ratings)
         self.round.pair_round1_matches(player_ratings)
@@ -139,6 +140,7 @@ class Controller:
         self.tournament.save_tournament(serialized_tournament, db)
 
     def create_other_round(self, player_ratings, active_tournament):
+        """Creates and adds a Round-class instance to a Tournament-class instance (for all rounds but the first one)."""
         self.tournament.sort_players(player_ratings, players_table)
         self.view.display_player_ratings(player_ratings)
         tested_matchmaking_data = active_tournament.matchmaking_data
@@ -157,8 +159,9 @@ class Controller:
 
         self.tournament.save_tournament(serialized_tournament, db)
 
-    # BOUCLES DU MENU
+    # Menu loops methods start here.
     def main_loop(self):
+        """Main loop method to display other loops with user input choice."""
         loop_length = 4
         while True:
             user_selection = self.view.display_main_menu()
@@ -176,6 +179,7 @@ class Controller:
                 self.view.display_menu_options(loop_length)
 
     def creation_loop(self):
+        """Creation loop method to display other creation loops with user input choice."""
         loop_length = 5
         while True:
             user_selection = self.view.display_creation_menu()
@@ -211,6 +215,7 @@ class Controller:
                 self.view.display_menu_options(loop_length)
 
     def player_subloop(self):
+        """Player subloop method to create or delete players with user input choice."""
         loop_length = 3
         while True:
             user_selection = self.view.display_player_submenu()
@@ -225,6 +230,7 @@ class Controller:
                 self.view.display_menu_options(loop_length)
 
     def reports_loop(self):
+        """Reports loop method to display all reports with user input choice."""
         loop_length = 6
         while True:
             user_selection = self.view.display_reports_menu()
