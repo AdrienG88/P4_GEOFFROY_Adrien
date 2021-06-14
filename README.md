@@ -12,7 +12,7 @@
 1 fichier README.me contenant la marche à suivre pour faire fonctionner le programme.
 
 
-## Mode d'emploi:
+## Mode d'emploi du programme:
 
 1.  Pour créer l'environnement virtuel nécessaire au fonctionnement des scripts:
 
@@ -40,3 +40,20 @@ Dans la console, entrez la commande suivante pour exécuter le programme :
 
 
 Ce script va créer une base de données si besoin et exécuter la boucle principale du contrôleur.
+
+##Mode d'emploi de flake8
+
+1. flake8 ne nécessite pas d'installation supplémentaire étant donné que son installation s'effectue en même temps que le reste de l'environnement virtuel.
+
+
+2. Dans la console, entrez successivement les commandes suivantes: 
+
+cd flake8_reports
+flake8 --max-line-length=119 --outputfile=/flake8_reports/report.html centreechecsprogramme.py
+flake8 --max-line-length=119 --outputfile=/flake8_reports/report.html P4_01_model.py
+flake8 --max-line-length=119 --outputfile=/flake8_reports/report.html P4_02_view.py
+flake8 --max-line-length=119 --outputfile=/flake8_reports/report.html P4_03_controller.py
+
+afin de générer un rapport d'erreurs contenu dans le dossier flake8-reports qui aura analysé les 4 fichiers du projet. 
+
+
