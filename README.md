@@ -34,7 +34,7 @@
 
 1.  Exécutez le script centreechecsprogramme.py avec Python
 
-Dans la console, entrez la commande suivante pour exécuter le programme :
+Dans la console, entrez la commande suivante pour exécuter le programme:
 
       python centreechecsprogramme.py
 
@@ -51,28 +51,11 @@ Voilà, vous pouvez à présent, ajouter de nouvelles rondes à votre tournoi!
 
 ## Mode d'emploi de flake8
 
-1. flake8 ne nécessite pas d'installation supplémentaire étant donné que son installation s'effectue en même temps que le reste de l'environnement virtuel.
+1. Décompresser l'archive flake8.zip contenant un dossier flake8, lui-même contenant un fichier tox.ini dans le dossier du projet.
 
 
-2. Dans la console, entrez successivement les commandes suivantes:
+2. Dans la console, entrez la commande suivante:
 
-      a.
+       flake8 --config=flake8/tox.ini --output-file=flake8/flake8-report.html
 
-            mkdir flake8_reports
-
-      pour créer le dossier qui contiendra les rapports.
-
-
-      b.
-
-            flake8 --max-line-length=119 --outputfile=/flake8_reports/report.html centreechecsprogramme.py
-
-            flake8 --max-line-length=119 --outputfile=/flake8_reports/report.html P4_01_model.py
-
-            flake8 --max-line-length=119 --outputfile=/flake8_reports/report.html P4_02_view.py
-
-            flake8 --max-line-length=119 --outputfile=/flake8_reports/report.html P4_03_controller.py
-
-afin de générer un rapport d'erreurs contenu dans le dossier flake8-reports qui aura analysé les 4 fichiers du projet. 
-
-
+afin de générer un rapport d'erreurs contenu dans le dossier flake8 qui aura analysé les 4 fichiers du projet.
