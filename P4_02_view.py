@@ -32,7 +32,7 @@ class View:
         """Displays creation menu."""
         creation_menu = dict()
         creation_menu['1'] = 'Créer un nouveau tournoi'
-        creation_menu['2'] = 'Créer/Modifier un joueur'
+        creation_menu['2'] = 'Créer un joueur'
         creation_menu['3'] = 'Importer les joueurs du tournoi'
         creation_menu['4'] = 'Créer une nouvelle ronde'
         creation_menu['5'] = 'Menu principal'
@@ -41,22 +41,6 @@ class View:
         print('***********************************************\nMENU TOURNOI:')
         for entry in options:
             print(entry, creation_menu[entry])
-
-        selection = input('***********************************************\nChoisissez une option: ')
-        return selection
-
-    @staticmethod
-    def display_player_submenu():
-        """Displays player submenu."""
-        player_submenu = dict()
-        player_submenu['1'] = 'Créer un nouveau joueur'
-        player_submenu['2'] = 'Supprimer un joueur existant'
-        player_submenu['3'] = 'Menu création'
-
-        options = player_submenu.keys()
-        print('***********************************************\nMENU TOURNOI:')
-        for entry in options:
-            print(entry, player_submenu[entry])
 
         selection = input('***********************************************\nChoisissez une option: ')
         return selection
@@ -166,6 +150,19 @@ class View:
         for match in tournament['Matches joues']:
             print(players_table.get(doc_id=match[0])['Nom'], "(BLANCS) contre",
                   players_table.get(doc_id=match[1])['Nom'], "(NOIRS)")
+
+    @staticmethod
+    def display_message(test_message):
+        if test_message == 1:
+            print("Effacement du dernier tournoi créé effectué")
+        elif test_message == 2:
+            print("Effacement du dernier joueur créé effectué")
+        elif test_message == 3:
+            print("\nModifications du tournoi enregistrées\n")
+        elif test_message == 4:
+            print("La saisie et l\'entrée de la base de données concordent!")
+        else:
+            print("\nCe tournoi est terminé!")
 
     @staticmethod
     def search_player_by_name(players_table, name):

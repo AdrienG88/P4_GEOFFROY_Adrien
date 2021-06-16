@@ -27,8 +27,6 @@ class Player:
         sex = db.table('players').all()[-1]['Sexe']
         elo = db.table('players').all()[-1]['ELO']
         created_player = Player(name, first_name, birthdate, sex, elo)
-        print(created_player.name, created_player.first_name, created_player.birthdate,
-              created_player.sex, created_player.elo)
         return created_player
 
     def save_player(self, serialized_player):
@@ -136,7 +134,8 @@ class Tournament:
 
         tournaments_table = db.table('tournaments')
         tournaments_table.insert(serialized_tournament)
-        print('\nModifications du tournoi enregistrées\n')
+        message = 3
+        return message
 
     @staticmethod
     def sort_players(player_ratings, players_table):
@@ -184,7 +183,7 @@ class Round:
             if coin_flip == 0:
                 coin_flip_player_ratings.append(player_ratings[i])
                 coin_flip_player_ratings.append(player_ratings[int(j)])
-            if coin_flip == 1:
+            else:
                 coin_flip_player_ratings.append(player_ratings[int(j)])
                 coin_flip_player_ratings.append(player_ratings[i])
 
@@ -215,7 +214,7 @@ class Round:
             if coin_flip == 0:
                 coin_flip_player_ratings.append(tested_player_ratings[i])
                 coin_flip_player_ratings.append(tested_player_ratings[i+1])
-            if coin_flip == 1:
+            else:
                 coin_flip_player_ratings.append(tested_player_ratings[i+1])
                 coin_flip_player_ratings.append(tested_player_ratings[i])
 
@@ -269,16 +268,17 @@ class Test:
         - created_player (Player): a Player-class instance created from downloaded entry in database.
 
         Returns:
-        - True if saved player and active player match. Deletes saved player otherwise.
+        - test_message value to be displayed by View. Deletes saved player if mismatch.
         """
         expected_player = player
 
         if expected_player.name == created_player.name and expected_player.elo == created_player.elo:
-            print('La saisie et l\'entrée de la base de données concordent!')
-            return True
+            test_message = 4
+            return test_message
         else:
             self.db.table('players').remove(doc_ids=[len(self.db.table('players'))])
-            print('Effacement du dernier joueur créé effectué')
+            test_message = 2
+            return test_message
 
     def test_created_tournament(self, tournament, created_tournament):
         """Tests if user-input tournament matches with saved tournament in database. Deletes it otherwise.
@@ -288,17 +288,18 @@ class Test:
         - created_tournament (Tournament): a Tournament-class instance created from downloaded entry in database.
 
         Returns:
-        - True if saved tournament and active tournament match. Deletes saved tournament otherwise.
+        - test_message value to be displayed by View. Deletes saved tournament if mismatch.
         """
         expected_tournament = tournament
 
         if expected_tournament.name == created_tournament.name \
                 and expected_tournament.rounds_nr == created_tournament.rounds_nr:
-            print('La saisie et l\'entrée de la base de données concordent!')
-            return True
+            test_message = 4
+            return test_message
         else:
             self.db.table('tournaments').remove(doc_ids=[len(self.db.table('tournaments'))])
-            print('Effacement du dernier tournoi créé effectué')
+            test_message = 1
+            return test_message
 
 
 class Deserializer:

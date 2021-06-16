@@ -1,8 +1,9 @@
 from P4_01_model import Player, Tournament, Round, Match, Test, Deserializer, Serializer
-from P4_02_view import *
+from P4_02_view import View
 from tinydb import TinyDB, Query
 
 # Preliminary variable initializations.
+db = TinyDB('db.json')
 players_table = db.table('players')
 tournaments_table = db.table('tournaments')
 
@@ -32,9 +33,11 @@ class Controller:
         desc = self.view.input_desc()
         tournament = self.tournament.create_tournament_instance(name, place, dates, rounds_nr, time_ctrl, desc)
         serialized_tournament = self.serializer.serialize_tournament(tournament)
-        self.tournament.save_tournament(serialized_tournament, db)
+        message = self.tournament.save_tournament(serialized_tournament, db)
+        self.view.display_message(message)
         created_tournament = self.tournament.get_created_tournament(db)
-        self.test.test_created_tournament(tournament, created_tournament)
+        test_message = self.test.test_created_tournament(tournament, created_tournament)
+        self.view.display_message(test_message)
 
     def create_player(self):
         """Creates a player instance from user inputs, serializes it and saves it in the database."""
@@ -47,23 +50,12 @@ class Controller:
         serialized_player = self.serializer.serialize_player(player)
         self.player.save_player(serialized_player)
         created_player = self.player.get_created_player(db)
-        self.test.test_created_player(player, created_player)
-
-    def delete_player(self):
-        """Deletes a player picked with an input from the "players" table."""
-        name = self.view.input_name("nom du joueur")
-        player = players_table.search(Query().Nom == name)
-        print(player)
-        user_choice = self.view.input_user_choice_deletion()
-        if user_choice == 'y':
-            players_table.remove(Query().Nom == name)
-            print('Suppression effectuée')
-        if user_choice == 'n':
-            print('Opération annulée')
+        test_message = self.test.test_created_player(player, created_player)
+        self.view.display_message(test_message)
 
     def create_players_id_list(self):
         """Picks a list of player ids in the "players" table as future players for the tournament."""
-        print(db.table('players').all())
+        self.view.display_actor_list()
         players_id_list = list()
         while len(players_id_list) < 8:
             player_name = self.view.input_name("nom du joueur")
@@ -89,7 +81,8 @@ class Controller:
             player_ratings.append(rated_player)
         active_tournament.player_ratings = player_ratings
         serialized_tournament = self.serializer.serialize_tournament(active_tournament)
-        self.tournament.save_tournament(serialized_tournament, db)
+        message = self.tournament.save_tournament(serialized_tournament, db)
+        self.view.display_message(message)
 
     def import_tournament(self):
         """Choose active tournament for further action and turns it into a Tournament-class instance."""
@@ -137,10 +130,11 @@ class Controller:
 
         serialized_tournament = self.serializer.serialize_tournament(active_tournament)
 
-        self.tournament.save_tournament(serialized_tournament, db)
+        message = self.tournament.save_tournament(serialized_tournament, db)
+        self.view.display_message(message)
 
     def create_other_round(self, player_ratings, active_tournament):
-        """Creates and adds a Round-class instance to a Tournament-class instance (for all rounds but the first one)."""
+        """Creates and adds Round-class instance to Tournament-class instance (for all rounds but the first one)."""
         self.tournament.sort_players(player_ratings, players_table)
         self.view.display_player_ratings(player_ratings)
         tested_matchmaking_data = active_tournament.matchmaking_data
@@ -157,7 +151,8 @@ class Controller:
 
         serialized_tournament = self.serializer.serialize_tournament(active_tournament)
 
-        self.tournament.save_tournament(serialized_tournament, db)
+        message = self.tournament.save_tournament(serialized_tournament, db)
+        self.view.display_message(message)
 
     # Menu loops methods start here.
     def main_loop(self):
@@ -188,7 +183,7 @@ class Controller:
                 self.create_tournament()
 
             if user_selection == '2':
-                self.player_subloop()
+                self.create_player()
 
             if user_selection == '3':
                 self.import_players_to_tournament()
@@ -203,7 +198,8 @@ class Controller:
                     self.create_other_round(active_tournament.player_ratings, active_tournament)
 
                 else:
-                    print('\nCe tournoi est terminé!')
+                    message = 5
+                    self.view.display_message(message)
                     self.tournament.sort_players(active_tournament.player_ratings, players_table)
                     self.view.display_player_ratings(active_tournament.player_ratings)
                     break
@@ -211,21 +207,6 @@ class Controller:
             if user_selection == '5':
                 break
 
-            else:
-                self.view.display_menu_options(loop_length)
-
-    def player_subloop(self):
-        """Player subloop method to create or delete players with user input choice."""
-        loop_length = 3
-        while True:
-            user_selection = self.view.display_player_submenu()
-
-            if user_selection == '1':
-                self.create_player()
-            if user_selection == '2':
-                self.delete_player()
-            if user_selection == '3':
-                break
             else:
                 self.view.display_menu_options(loop_length)
 
